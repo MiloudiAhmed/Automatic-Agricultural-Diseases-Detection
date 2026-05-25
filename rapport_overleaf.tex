@@ -1,0 +1,704 @@
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+
+\geometry{margin=2.5cm}
+\graphicspath{{./}{models/}{notebooks/}{figures/}}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Plant Disease AI}
+\rhead{Projet AI}
+\cfoot{\thepage}
+
+\lstdefinestyle{code}{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{teal}
+}
+\lstset{style=code}
+
+\newcommand{\maybeimage}[3]{
+\begin{figure}[H]
+  \centering
+  \IfFileExists{#1}{
+    \includegraphics[width=#2]{#1}
+  }{
+    \fbox{
+      \parbox{0.82\linewidth}{
+        \centering
+        \vspace{0.8cm}
+        Image à ajouter dans Overleaf : \texttt{\detokenize{#1}}
+        \vspace{0.8cm}
+      }
+    }
+  }
+  \caption{#3}
+\end{figure}
+}
+
+\begin{document}
+
+% =========================
+% PAGE DE GARDE
+% =========================
+\begin{titlepage}
+    \centering
+
+    \vspace*{-1cm}
+
+    \IfFileExists{fst-logo.png}{
+      \includegraphics[width=4cm]{fst-logo.png}\\[1.2cm]
+    }{
+      \fbox{
+        \parbox[c][3cm][c]{4cm}{
+          \centering
+          \textbf{Logo FST}\\
+          \small fst-logo.png
+        }
+      }\\[1.2cm]
+    }
+
+    {\Large \textbf{Faculté des Sciences et Techniques}}\\[0.3cm]
+    {\large \textbf{FST}}\\[1.2cm]
+
+    {\Huge \textbf{Rapport d'atelier}}\\[0.5cm]
+    {\LARGE \textbf{Détection automatique des maladies des plantes}}\\[0.5cm]
+    {\Large \textbf{Machine Learning, CNN, EfficientNet et Application Web}}\\[0.8cm]
+
+    {\Large \textbf{Module : Projet AI}}\\[0.4cm]
+    {\Large \textbf{Professeur : Mourad Nachaoui}}\\[1.2cm]
+
+    \rule{\linewidth}{0.5mm}\\[0.4cm]
+    {\large
+    Application académique basée sur l'article :\\
+    \textit{Machine Learning and Deep Learning Based Computational Techniques in Automatic Agricultural Diseases Detection: Methodologies, Applications, and Challenges}
+    }\\[0.4cm]
+    \rule{\linewidth}{0.5mm}\\[1.2cm]
+
+    \vfill
+
+    {\large \textbf{Réalisé par : Ahmed Miloudi}}\\[0.3cm]
+    {\large Filière : Master}\\[0.3cm]
+    {\large Année universitaire : 2025--2026}\\[0.3cm]
+    {\large \today}
+\end{titlepage}
+
+\pagenumbering{roman}
+
+% =========================
+% REMERCIEMENTS
+% =========================
+\chapter*{Remerciements}
+\addcontentsline{toc}{chapter}{Remerciements}
+
+Je tiens à remercier mon professeur Mourad Nachaoui pour l'encadrement, les orientations et les remarques données pendant la réalisation de ce projet. Je remercie également la Faculté des Sciences et Techniques pour le cadre académique qui a permis de travailler sur un sujet appliqué reliant l'intelligence artificielle, la vision par ordinateur et l'agriculture intelligente.
+
+% =========================
+% RÉSUMÉ
+% =========================
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+
+Ce projet présente une application académique de détection automatique des maladies des plantes à partir d'images de feuilles. Le travail s'appuie sur l'article de Wani et al. \cite{wani2021}, qui décrit les méthodologies, applications et défis des techniques de Machine Learning et Deep Learning dans la détection automatique des maladies agricoles.
+
+La méthodologie suivie respecte le workflow suivant : Dataset, Preprocessing, Feature Extraction, Machine Learning Models, Deep Learning Models, Evaluation, Comparison, Explainability, Frontend, FastAPI Backend, TensorFlow Model, puis Prediction avec Saliency Map. Deux familles d'approches sont comparées : une approche Machine Learning classique basée sur les caractéristiques HOG et histogrammes de couleur avec SVM, KNN, Decision Tree et ANN ; puis une approche Deep Learning basée sur un CNN personnalisé et EfficientNetB0 par transfert learning. Le meilleur modèle est intégré dans une application web composée d'un frontend Next.js et d'un backend FastAPI.
+
+\textbf{Mots-clés :} maladies des plantes, Machine Learning, SVM, CNN, EfficientNet, FastAPI, Next.js, TensorFlow, saliency map.
+
+\chapter*{Summary}
+\addcontentsline{toc}{chapter}{Summary}
+
+This project presents an academic application for automatic plant disease detection from leaf images. It is based on the article by Wani et al. \cite{wani2021}, which discusses Machine Learning and Deep Learning methodologies, applications and challenges for agricultural disease detection.
+
+The project follows a complete workflow: Dataset, Preprocessing, Feature Extraction, Machine Learning Models, Deep Learning Models, Evaluation, Comparison, Explainability, Frontend, FastAPI Backend, TensorFlow Model, and Prediction with Saliency Map. Classical Machine Learning models are compared with Deep Learning models, and the final EfficientNet model is deployed through a FastAPI backend and a Next.js frontend.
+
+\textbf{Keywords:} plant disease detection, Machine Learning, SVM, CNN, EfficientNet, FastAPI, Next.js, TensorFlow, saliency map.
+
+\tableofcontents
+\listoffigures
+\listoftables
+\newpage
+
+\pagenumbering{arabic}
+
+% =========================
+% INTRODUCTION
+% =========================
+\chapter{Introduction générale}
+
+\section{Contexte du projet}
+Les maladies des plantes ont un impact direct sur la productivité agricole, la qualité des récoltes et la sécurité alimentaire. La détection traditionnelle se fait généralement par observation visuelle, ce qui demande du temps, de l'expérience et une bonne connaissance des symptômes. Cette méthode peut être insuffisante lorsque les symptômes sont faibles, similaires entre plusieurs maladies ou présents dans des conditions d'éclairage non contrôlées.
+
+L'évolution de la vision par ordinateur, du Machine Learning et du Deep Learning permet aujourd'hui de développer des systèmes capables d'analyser automatiquement des images de feuilles. Ces systèmes peuvent aider à identifier rapidement une maladie probable et à assister les agriculteurs ou les techniciens agricoles.
+
+\section{Article de référence}
+Le projet est basé sur l'article de Wani et al. intitulé \textit{Machine Learning and Deep Learning Based Computational Techniques in Automatic Agricultural Diseases Detection: Methodologies, Applications, and Challenges} \cite{wani2021}. Cet article présente les étapes principales d'un système automatique de détection, les modèles utilisés dans la littérature, les datasets disponibles et les défis du domaine.
+
+Les idées importantes retenues sont :
+\begin{itemize}
+  \item l'importance de l'acquisition et de la qualité des images ;
+  \item la nécessité du preprocessing avant l'apprentissage ;
+  \item l'utilisation de caractéristiques visuelles dans le Machine Learning classique ;
+  \item l'avantage des CNN pour apprendre automatiquement les caractéristiques ;
+  \item les difficultés liées au bruit, à la lumière, au déséquilibre des classes et aux symptômes similaires ;
+  \item l'intérêt du déploiement réel sous forme d'application web ou mobile.
+\end{itemize}
+
+\section{Problématique}
+La problématique du projet est la suivante :
+
+\begin{center}
+\textit{Comment concevoir et implémenter une application intelligente capable de détecter automatiquement les maladies des feuilles à partir d'une image, tout en comparant des modèles Machine Learning et Deep Learning ?}
+\end{center}
+
+\section{Objectifs du projet}
+Les objectifs principaux sont :
+\begin{itemize}
+  \item préparer un dataset d'images de feuilles de tomate et de pomme de terre ;
+  \item appliquer le preprocessing nécessaire ;
+  \item extraire des caractéristiques visuelles pour les modèles classiques ;
+  \item entraîner et comparer KNN, SVM, Decision Tree et ANN ;
+  \item entraîner un CNN personnalisé et EfficientNetB0 ;
+  \item évaluer les modèles par accuracy, rapport de classification et matrice de confusion ;
+  \item intégrer le meilleur modèle dans une application web ;
+  \item produire une prédiction accompagnée d'une carte de saillance.
+\end{itemize}
+
+\section{Workflow global}
+Le projet suit le workflow ci-dessous :
+
+\begin{center}
+\fbox{
+\begin{minipage}{0.72\linewidth}
+\centering
+Dataset\\
+$\downarrow$\\
+Preprocessing\\
+$\downarrow$\\
+Feature Extraction\\
+$\downarrow$\\
+Machine Learning Models\\
+$\downarrow$\\
+Deep Learning Models\\
+$\downarrow$\\
+Evaluation\\
+$\downarrow$\\
+Comparison\\
+$\downarrow$\\
+Explainability (Saliency Map)\\
+$\downarrow$\\
+Frontend (Next.js)\\
+$\downarrow$\\
+FastAPI Backend\\
+$\downarrow$\\
+TensorFlow Model\\
+$\downarrow$\\
+Prediction + Saliency Map
+\end{minipage}
+}
+\end{center}
+
+% =========================
+% CHAPITRE 1 DATASET
+% =========================
+\chapter{Dataset}
+
+\section{Présentation du dataset}
+Le dataset utilisé contient des images de feuilles de tomate et de pomme de terre. Chaque image appartient à une classe représentant soit une feuille saine, soit une feuille infectée par une maladie donnée. Le dataset local contient 6652 images réparties en six classes.
+
+\begin{table}[H]
+\centering
+\caption{Distribution des images par classe}
+\begin{tabular}{lr}
+\toprule
+\textbf{Classe} & \textbf{Nombre d'images} \\
+\midrule
+Potato Early blight & 1000 \\
+Potato Late blight & 1000 \\
+Potato healthy & 152 \\
+Tomato Early blight & 1000 \\
+Tomato Late blight & 1909 \\
+Tomato healthy & 1591 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Classes étudiées}
+Les classes étudiées sont :
+\begin{itemize}
+  \item \texttt{Potato\_\_\_Early\_blight} ;
+  \item \texttt{Potato\_\_\_Late\_blight} ;
+  \item \texttt{Potato\_\_\_healthy} ;
+  \item \texttt{Tomato\_Early\_blight} ;
+  \item \texttt{Tomato\_Late\_blight} ;
+  \item \texttt{Tomato\_healthy}.
+\end{itemize}
+
+\section{Observation du déséquilibre}
+Le dataset est déséquilibré. Par exemple, la classe \texttt{Potato\_\_\_healthy} contient seulement 152 images, alors que \texttt{Tomato\_Late\_blight} contient 1909 images. Ce déséquilibre peut influencer les modèles et favoriser les classes majoritaires.
+
+% =========================
+% CHAPITRE 2 PREPROCESSING
+% =========================
+\chapter{Preprocessing}
+
+\section{Objectif du preprocessing}
+Le preprocessing permet de transformer les images brutes en données exploitables par les modèles. Dans notre projet, cette étape permet d'uniformiser la taille, le format et la représentation des images.
+
+\section{Redimensionnement}
+Toutes les images sont redimensionnées en $224 \times 224$ pixels. Ce format est utilisé à la fois pour l'extraction de caractéristiques et pour les modèles Deep Learning, notamment EfficientNetB0.
+
+\section{Conversion et normalisation}
+Pour les modèles Machine Learning classiques, les images sont lues avec OpenCV, converties de BGR vers RGB, puis transformées en vecteurs de caractéristiques. Pour le CNN personnalisé, une couche \texttt{Rescaling(1./255)} normalise les pixels. Pour EfficientNetB0, la fonction \texttt{preprocess\_input} applique le preprocessing attendu par l'architecture.
+
+\section{Data augmentation}
+Pour réduire le surapprentissage et améliorer la généralisation, les modèles Deep Learning utilisent :
+\begin{itemize}
+  \item retournement horizontal ;
+  \item rotation aléatoire ;
+  \item zoom aléatoire ;
+  \item contraste aléatoire.
+\end{itemize}
+
+% =========================
+% CHAPITRE 3 FEATURE EXTRACTION
+% =========================
+\chapter{Feature Extraction}
+
+\section{Rôle de l'extraction de caractéristiques}
+Dans une approche Machine Learning classique, le modèle ne reçoit pas directement l'image brute. Il reçoit un vecteur numérique représentant l'information visuelle importante. Cette étape est donc essentielle pour la qualité de la classification.
+
+\section{HOG}
+HOG, ou \textit{Histogram of Oriented Gradients}, permet de représenter les contours et les orientations locales d'une image. Il est utile pour capturer les formes et structures des lésions sur les feuilles.
+
+\section{Histogramme de couleur}
+L'histogramme de couleur représente la distribution des couleurs dans l'image. Cette information est importante car plusieurs maladies provoquent des changements de couleur, comme des taches brunes, jaunes ou noires.
+
+\section{Vecteur final}
+Les caractéristiques HOG et histogramme couleur sont concaténées pour former un seul vecteur. Dans notre projet, la matrice finale des caractéristiques possède la forme suivante :
+
+\begin{center}
+\texttt{Feature matrix shape : (6652, 26756)}
+\end{center}
+
+% =========================
+% CHAPITRE 4 ML MODELS
+% =========================
+\chapter{Machine Learning Models}
+
+\section{Séparation des données}
+Les caractéristiques extraites sont normalisées, puis une réduction de dimension par PCA est appliquée. Les données sont ensuite séparées en ensembles d'entraînement et de test avec une proportion 80/20.
+
+\section{KNN}
+KNN classe une nouvelle image selon les classes de ses voisins les plus proches dans l'espace des caractéristiques. Il est simple, mais sensible à la dimension élevée et au choix de $k$.
+
+\section{SVM}
+Le SVM avec noyau RBF est utilisé pour séparer les classes dans un espace transformé non linéaire. Il est souvent performant sur des vecteurs de caractéristiques bien construits.
+
+\begin{lstlisting}[language=Python, caption={Configuration du modèle SVM}]
+svm = SVC(
+    kernel="rbf",
+    C=1,
+    gamma="scale"
+)
+svm.fit(X_train, y_train)
+\end{lstlisting}
+
+\section{Decision Tree}
+Le Decision Tree apprend des règles de décision successives. Il est interprétable, mais peut facilement surapprendre lorsque les données sont complexes.
+
+\section{ANN}
+Un réseau de neurones dense est également testé sur les caractéristiques extraites. Il contient plusieurs couches \texttt{Dense} avec \texttt{Dropout}.
+
+% =========================
+% CHAPITRE 5 DL MODELS
+% =========================
+\chapter{Deep Learning Models}
+
+\section{Intérêt du Deep Learning}
+Contrairement au Machine Learning classique, le Deep Learning apprend automatiquement les caractéristiques à partir des images. Les couches convolutionnelles détectent progressivement des formes simples, puis des motifs plus complexes liés aux symptômes.
+
+\section{CNN personnalisé}
+Le CNN personnalisé utilise trois blocs convolutionnels suivis d'une couche dense et d'une sortie softmax à six classes.
+
+\begin{lstlisting}[language=Python, caption={Architecture simplifiée du CNN personnalisé}]
+custom_cnn = Sequential([
+    data_augmentation,
+    layers.Rescaling(1./255),
+    layers.Conv2D(32, (3,3), activation="relu"),
+    layers.MaxPooling2D(),
+    layers.Conv2D(64, (3,3), activation="relu"),
+    layers.MaxPooling2D(),
+    layers.Conv2D(128, (3,3), activation="relu"),
+    layers.MaxPooling2D(),
+    layers.Flatten(),
+    layers.Dense(256, activation="relu"),
+    layers.Dropout(0.5),
+    layers.Dense(6, activation="softmax")
+])
+\end{lstlisting}
+
+\section{EfficientNetB0}
+EfficientNetB0 est un modèle pré-entraîné sur ImageNet. Dans ce projet, il est utilisé avec transfert learning. La partie convolutionnelle extrait les représentations visuelles, puis une nouvelle tête de classification est ajoutée pour les six classes du dataset.
+
+\begin{lstlisting}[language=Python, caption={Structure utilisée avec EfficientNetB0}]
+base_model = EfficientNetB0(
+    input_shape=(224, 224, 3),
+    include_top=False,
+    weights="imagenet"
+)
+
+efficientnet_model = Sequential([
+    data_augmentation,
+    layers.Lambda(preprocess_input),
+    base_model,
+    layers.GlobalAveragePooling2D(),
+    layers.Dropout(0.3),
+    layers.Dense(128, activation="relu"),
+    layers.Dense(6, activation="softmax")
+])
+\end{lstlisting}
+
+% =========================
+% CHAPITRE 6 EVALUATION
+% =========================
+\chapter{Evaluation}
+
+\section{Métriques utilisées}
+Les modèles sont évalués avec :
+\begin{itemize}
+  \item accuracy ;
+  \item précision ;
+  \item rappel ;
+  \item F1-score ;
+  \item matrice de confusion.
+\end{itemize}
+
+\section{Résultats Machine Learning}
+\begin{table}[H]
+\centering
+\caption{Résultats des modèles Machine Learning}
+\begin{tabular}{lr}
+\toprule
+\textbf{Modèle} & \textbf{Accuracy} \\
+\midrule
+KNN & 56.57\% \\
+SVM RBF & 82.87\% \\
+Decision Tree & 61.23\% \\
+ANN & 80.47\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Résultats Deep Learning}
+\begin{table}[H]
+\centering
+\caption{Résultats des modèles Deep Learning}
+\begin{tabular}{lr}
+\toprule
+\textbf{Modèle} & \textbf{Accuracy validation} \\
+\midrule
+CNN personnalisé & 93.53\% \\
+EfficientNetB0 & 96.47\% \\
+EfficientNetB0 après fine-tuning & 95.86\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\maybeimage{models/custom_cnn_accuracy.png}{0.82\linewidth}{Courbe d'accuracy du CNN personnalisé}
+\maybeimage{models/confusion_matrix_EfficientNet.png}{0.82\linewidth}{Matrice de confusion du modèle EfficientNetB0}
+
+% =========================
+% CHAPITRE 7 COMPARISON
+% =========================
+\chapter{Comparison}
+
+\section{Comparaison générale}
+Les résultats montrent que les modèles Deep Learning dépassent les modèles classiques. Le SVM obtient un bon score avec 82.87\%, mais il dépend fortement de la qualité des caractéristiques manuelles. Le CNN personnalisé améliore nettement la performance avec 93.53\%, tandis qu'EfficientNetB0 atteint 96.47\%.
+
+\begin{table}[H]
+\centering
+\caption{Comparaison globale des meilleures approches}
+\begin{tabular}{lll}
+\toprule
+\textbf{Famille} & \textbf{Meilleur modèle} & \textbf{Accuracy} \\
+\midrule
+Machine Learning & SVM RBF & 82.87\% \\
+Deep Learning & EfficientNetB0 & 96.47\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Discussion}
+EfficientNetB0 est plus performant car il bénéficie du transfert learning. Il possède déjà des filtres visuels appris sur un grand dataset, ce qui facilite l'adaptation au problème des feuilles. Le CNN personnalisé est aussi performant, mais il apprend uniquement à partir du dataset disponible. Les modèles classiques restent utiles pour comprendre le pipeline de base, mais leur performance est limitée par l'extraction manuelle.
+
+% =========================
+% CHAPITRE 8 EXPLAINABILITY
+% =========================
+\chapter{Explainability : Saliency Map}
+
+\section{Pourquoi expliquer la prédiction ?}
+Dans un système de diagnostic, il ne suffit pas d'afficher une classe prédite. Il est aussi important de montrer les zones de l'image qui ont influencé la décision du modèle. Cela améliore la confiance de l'utilisateur et permet de vérifier si le modèle regarde réellement les symptômes de la feuille.
+
+\section{Principe de la Saliency Map}
+La saliency map est calculée à partir du gradient de la classe prédite par rapport aux pixels de l'image. Les pixels ayant une forte influence apparaissent avec une intensité plus élevée.
+
+\section{Résultat visuel}
+\maybeimage{notebooks/saliency_map.png}{0.75\linewidth}{Exemple de carte de saillance générée pendant l'implémentation}
+
+Dans l'application, le backend retourne deux visualisations :
+\begin{itemize}
+  \item une heatmap ;
+  \item un overlay qui superpose la heatmap sur l'image originale.
+\end{itemize}
+
+% =========================
+% CHAPITRE 9 FRONTEND
+% =========================
+\chapter{Frontend : Next.js}
+
+\section{Rôle du frontend}
+Le frontend est l'interface utilisée par l'utilisateur final. Il permet de charger une image de feuille, d'envoyer cette image au backend, puis d'afficher le diagnostic retourné.
+
+\section{Fonctionnalités principales}
+L'interface Next.js propose :
+\begin{itemize}
+  \item une zone de dépôt d'image ;
+  \item un bouton d'analyse ;
+  \item l'état de connexion à l'API ;
+  \item l'affichage de la classe prédite ;
+  \item le score de confiance ;
+  \item les cinq meilleures prédictions ;
+  \item les modes Photo, Saliency et Heatmap.
+\end{itemize}
+
+\section{Appel de l'API}
+Le frontend utilise \texttt{fetch} pour appeler l'API FastAPI. L'image est envoyée sous forme de \texttt{FormData}.
+
+\begin{lstlisting}[caption={Envoi de l'image depuis le frontend}]
+const formData = new FormData();
+formData.append("file", file);
+
+const response = await fetch(`${API_URL}/api/predict`, {
+  method: "POST",
+  body: formData
+});
+\end{lstlisting}
+
+\maybeimage{figures/interface_prediction.png}{0.95\linewidth}{Capture de l'interface web après une prédiction}
+
+% =========================
+% CHAPITRE 10 BACKEND
+% =========================
+\chapter{FastAPI Backend}
+
+\section{Rôle du backend}
+Le backend reçoit l'image envoyée par le frontend, vérifie son format, applique le preprocessing, charge le modèle TensorFlow, exécute la prédiction et retourne un résultat JSON.
+
+\section{Routes principales}
+\begin{table}[H]
+\centering
+\caption{Routes principales du backend FastAPI}
+\begin{tabular}{lll}
+\toprule
+\textbf{Méthode} & \textbf{Route} & \textbf{Rôle} \\
+\midrule
+GET & \texttt{/api/health} & Vérifier que l'API fonctionne. \\
+GET & \texttt{/api/classes} & Retourner le modèle, l'input size et les classes. \\
+POST & \texttt{/api/predict} & Recevoir une image et retourner la prédiction. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Route de prédiction}
+\begin{lstlisting}[language=Python, caption={Route FastAPI de prédiction}]
+@app.post("/api/predict")
+async def predict(file: UploadFile = File(...)) -> dict[str, object]:
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Le fichier doit etre une image.")
+
+    image_bytes = await file.read()
+    return predict_leaf_disease(image_bytes, filename=file.filename or "leaf-image")
+\end{lstlisting}
+
+\maybeimage{figures/api_docs.png}{0.95\linewidth}{Documentation interactive FastAPI disponible sur \texttt{/docs}}
+
+% =========================
+% CHAPITRE 11 TENSORFLOW MODEL
+% =========================
+\chapter{TensorFlow Model}
+
+\section{Chargement du modèle}
+Le backend charge le fichier \texttt{models/efficientnet\_model.h5}. Les noms des classes sont lus depuis \texttt{models/class\_names.txt}. Le chargement est mis en cache avec \texttt{lru\_cache}, ce qui évite de recharger le modèle à chaque requête.
+
+\begin{lstlisting}[language=Python, caption={Chargement du modèle TensorFlow}]
+model = load_model(
+    model_path,
+    custom_objects={"preprocess_input": preprocess_input},
+    compile=False,
+    safe_mode=False,
+)
+\end{lstlisting}
+
+\section{Taille d'entrée}
+La taille d'entrée est détectée à partir du modèle. Si elle n'est pas disponible, le backend utilise par défaut $224 \times 224$ pixels.
+
+\section{Classes}
+Le modèle produit six probabilités correspondant aux six classes. La classe ayant la probabilité la plus élevée est considérée comme la prédiction finale.
+
+% =========================
+% CHAPITRE 12 PREDICTION
+% =========================
+\chapter{Prediction + Saliency Map}
+
+\section{Étapes d'une prédiction}
+Lorsqu'une image est envoyée à l'API, le pipeline d'inférence est le suivant :
+\begin{enumerate}
+  \item lecture du fichier image ;
+  \item conversion en RGB ;
+  \item redimensionnement selon l'entrée du modèle ;
+  \item transformation en batch NumPy ;
+  \item prédiction avec TensorFlow ;
+  \item normalisation éventuelle des sorties en probabilités ;
+  \item sélection de la meilleure classe ;
+  \item génération de la saliency map ;
+  \item retour du résultat au frontend.
+\end{enumerate}
+
+\section{Format du résultat}
+Le backend retourne un objet JSON contenant :
+\begin{itemize}
+  \item le nom du fichier ;
+  \item le nom du modèle utilisé ;
+  \item la classe prédite ;
+  \item le label lisible ;
+  \item le score de confiance ;
+  \item l'état sain ou malade ;
+  \item une recommandation simple ;
+  \item les top predictions ;
+  \item l'image preview ;
+  \item la heatmap ;
+  \item l'overlay.
+\end{itemize}
+
+\section{Recommandation}
+Le projet retourne une recommandation simple selon le résultat :
+\begin{itemize}
+  \item si la feuille est saine, continuer la surveillance ;
+  \item si la confiance est faible, reprendre une photo plus claire ;
+  \item si une maladie est probable, isoler les feuilles atteintes et confirmer le diagnostic.
+\end{itemize}
+
+% =========================
+% COMMANDES
+% =========================
+\chapter{Commandes d'exécution sous VS Code}
+
+\section{Lancer le backend}
+Dans un terminal PowerShell ouvert à la racine du projet :
+
+\begin{lstlisting}[caption={Commandes pour lancer le backend}]
+cd backend
+..\.venv\Scripts\python.exe -m pip install -r requirements.txt
+..\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+\end{lstlisting}
+
+La documentation de l'API sera disponible sur :
+
+\begin{center}
+\url{http://127.0.0.1:8000/docs}
+\end{center}
+
+\section{Lancer le frontend}
+Ouvrir un deuxième terminal PowerShell :
+
+\begin{lstlisting}[caption={Commandes pour lancer le frontend}]
+cd frontend
+npm install
+npm run dev
+\end{lstlisting}
+
+L'application sera disponible sur :
+
+\begin{center}
+\url{http://localhost:3000}
+\end{center}
+
+\section{Tester rapidement l'API}
+\begin{lstlisting}[caption={Test rapide de l'API}]
+curl http://127.0.0.1:8000/api/health
+\end{lstlisting}
+
+% =========================
+% CONCLUSION
+% =========================
+\chapter{Conclusion générale}
+
+Ce projet a permis de mettre en pratique les concepts étudiés dans l'article de référence sur la détection automatique des maladies agricoles. Le workflow complet a été respecté, depuis le dataset jusqu'à l'application web finale.
+
+Les résultats montrent que les modèles Deep Learning sont plus performants que les modèles Machine Learning classiques. Le SVM atteint 82.87\%, ce qui constitue une bonne performance pour une approche basée sur l'extraction manuelle des caractéristiques. Le CNN personnalisé atteint 93.53\%, tandis qu'EfficientNetB0 obtient le meilleur résultat avec 96.47\%.
+
+L'intégration dans FastAPI et Next.js rend le modèle exploitable sous forme d'application. L'ajout de la saliency map permet aussi de rendre la prédiction plus compréhensible visuellement.
+
+\section*{Perspectives}
+\addcontentsline{toc}{section}{Perspectives}
+
+Les améliorations possibles sont :
+\begin{itemize}
+  \item ajouter plus d'images pour les classes minoritaires ;
+  \item tester le modèle avec des images réelles prises au champ ;
+  \item utiliser Grad-CAM pour une meilleure explicabilité ;
+  \item ajouter des recommandations agronomiques détaillées ;
+  \item convertir le modèle en TensorFlow Lite pour une application mobile ;
+  \item déployer l'application sur un serveur cloud.
+\end{itemize}
+
+\begin{thebibliography}{9}
+
+\bibitem{wani2021}
+J. A. Wani, S. Sharma, M. Muzamil, S. Ahmed, S. Sharma and S. Singh,
+\textit{Machine Learning and Deep Learning Based Computational Techniques in Automatic Agricultural Diseases Detection: Methodologies, Applications, and Challenges},
+Archives of Computational Methods in Engineering, 2021.
+
+\bibitem{plantvillage}
+D. P. Hughes and M. Salathé,
+\textit{An open access repository of images on plant health to enable the development of mobile disease diagnostics},
+PlantVillage dataset.
+
+\bibitem{efficientnet}
+M. Tan and Q. V. Le,
+\textit{EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks},
+International Conference on Machine Learning, 2019.
+
+\end{thebibliography}
+
+\end{document}
