@@ -66,7 +66,7 @@ plant-disease-ai/
 │
 ├── models/
 │   ├── class_names.txt          # Class labels used by the backend
-│   ├── efficientnet_model.h5    # Final TensorFlow/Keras model, added locally after clone
+│   ├── efficientnet_model.h5    # Final TensorFlow/Keras model used at runtime
 │   ├── confusion_matrix.png
 │   ├── confusion_matrix_EfficientNet.png
 │   └── custom_cnn_accuracy.png
@@ -209,6 +209,38 @@ The frontend is built with **Next.js** and provides:
 - top predictions
 - saliency and heatmap visualization
 
+## Web Deployment
+
+The project is now deployable as one web service:
+
+- Next.js is exported as static files with `output: "export"`.
+- FastAPI serves the exported frontend from `frontend/out`.
+- The same public URL handles both the interface and `/api/*` routes.
+- Docker builds the frontend, installs the backend, copies `models/efficientnet_model.h5`, then starts Uvicorn.
+
+Deployment files:
+
+- `Dockerfile`
+- `.dockerignore`
+- `render.yaml`
+
+Important: `models/efficientnet_model.h5` must be pushed with the repository for cloud deployment. The file is about 49 MB, below GitHub's 100 MiB single-file limit.
+
+### Deploy on Render
+
+1. Push this repository to GitHub.
+2. Make sure `models/efficientnet_model.h5` is included in the commit.
+3. Open Render and create a new Blueprint from the GitHub repository.
+4. Render will read `render.yaml`, build the Docker image and provide one public URL.
+
+After deployment:
+
+```text
+https://your-service.onrender.com
+https://your-service.onrender.com/docs
+https://your-service.onrender.com/api/health
+```
+
 ## Installation and Running
 
 ### Prerequisites
@@ -287,7 +319,7 @@ models/efficientnet_model.h5
 models/class_names.txt
 ```
 
-Because trained model binaries can be large, `models/efficientnet_model.h5` is not tracked by Git. To run inference, place the trained EfficientNet model in:
+For deployment, `models/efficientnet_model.h5` is tracked by Git so Docker-based hosts can build the complete app. To run inference locally, keep the trained EfficientNet model in:
 
 ```text
 models/efficientnet_model.h5
@@ -323,7 +355,6 @@ The following generated files are intentionally not tracked by Git:
 - `dataset/`
 - `models/X_features.npy`
 - `models/y_labels.npy`
-- `models/efficientnet_model.h5`
 - `models/custom_cnn_model.h5`
 - `notebooks/efficientnet_functional.keras`
 - virtual environments

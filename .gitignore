@@ -29,7 +29,6 @@ yarn-error.log*
 dataset/
 models/X_features.npy
 models/y_labels.npy
-models/efficientnet_model.h5
 models/custom_cnn_model.h5
 notebooks/efficientnet_functional.keras
 

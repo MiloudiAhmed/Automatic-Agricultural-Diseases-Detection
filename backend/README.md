@@ -30,3 +30,23 @@ Optional environment variables:
 - `GET /api/classes`
 - `POST /api/predict` with a multipart `file` field
 
+## Single-Service Deployment
+
+When `frontend/out` exists, FastAPI also serves the frontend:
+
+- `GET /` returns the Next.js interface
+- `GET /_next/*` serves static frontend assets
+- `/api/*` stays reserved for backend routes
+
+Build the frontend first:
+
+```powershell
+cd ..\frontend
+npm run build
+```
+
+Then run from the project root:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+```

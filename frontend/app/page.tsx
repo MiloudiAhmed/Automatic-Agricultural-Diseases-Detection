@@ -40,7 +40,17 @@ type PredictionResult = {
   top_predictions: TopPrediction[];
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+function getApiUrl() {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
+  if (typeof window !== "undefined" && window.location.port === "3000") {
+    return "http://127.0.0.1:8000";
+  }
+
+  return "";
+}
 
 function formatPercent(value: number) {
   return `${Math.round(value * 1000) / 10}%`;
@@ -58,7 +68,7 @@ export default function Home() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`${API_URL}/api/health`, { signal: controller.signal })
+    fetch(`${getApiUrl()}/api/health`, { signal: controller.signal })
       .then((response) => setApiStatus(response.ok ? "online" : "offline"))
       .catch(() => setApiStatus("offline"));
 
@@ -134,7 +144,7 @@ export default function Home() {
     formData.append("file", file);
 
     try {
-      const response = await fetch(`${API_URL}/api/predict`, {
+      const response = await fetch(`${getApiUrl()}/api/predict`, {
         method: "POST",
         body: formData
       });

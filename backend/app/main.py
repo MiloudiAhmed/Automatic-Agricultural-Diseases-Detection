@@ -1,8 +1,16 @@
+from pathlib import Path
+
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from .ml_service import get_model_info, predict_leaf_disease
 
+
+ROOT_DIR = Path(__file__).resolve().parents[2]
+FRONTEND_OUT_DIR = ROOT_DIR / "frontend" / "out"
+FRONTEND_INDEX = FRONTEND_OUT_DIR / "index.html"
 
 app = FastAPI(
     title="Plant Disease AI API",
@@ -24,8 +32,11 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-def root() -> dict[str, str]:
+@app.get("/", include_in_schema=False, response_model=None)
+def root():
+    if FRONTEND_INDEX.exists():
+        return FileResponse(FRONTEND_INDEX)
+
     return {"message": "Plant Disease AI API", "docs": "/docs"}
 
 
@@ -56,3 +67,24 @@ async def predict(file: UploadFile = File(...)) -> dict[str, object]:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Prediction impossible: {exc}") from exc
+
+
+if (FRONTEND_OUT_DIR / "_next").exists():
+    app.mount(
+        "/_next",
+        StaticFiles(directory=FRONTEND_OUT_DIR / "_next"),
+        name="next-static",
+    )
+
+
+@app.get("/{full_path:path}", include_in_schema=False, response_model=None)
+def serve_frontend(full_path: str):
+    requested_path = FRONTEND_OUT_DIR / full_path
+
+    if requested_path.is_file():
+        return FileResponse(requested_path)
+
+    if FRONTEND_INDEX.exists():
+        return FileResponse(FRONTEND_INDEX)
+
+    raise HTTPException(status_code=404, detail="Frontend build introuvable.")

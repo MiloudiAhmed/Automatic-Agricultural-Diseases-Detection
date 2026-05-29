@@ -9,10 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import tensorflow as tf
 from PIL import Image, UnidentifiedImageError
-from tensorflow.keras.applications.efficientnet import preprocess_input
-from tensorflow.keras.models import load_model
 
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -22,7 +19,7 @@ DEFAULT_CLASS_NAMES_PATH = ROOT_DIR / "models" / "class_names.txt"
 
 @dataclass(frozen=True)
 class ModelBundle:
-    model: tf.keras.Model
+    model: Any
     class_names: list[str]
     input_size: tuple[int, int]
     model_path: Path
@@ -44,7 +41,7 @@ def _read_class_names(path: Path) -> list[str]:
     return class_names
 
 
-def _model_input_size(model: tf.keras.Model) -> tuple[int, int]:
+def _model_input_size(model: Any) -> tuple[int, int]:
     input_shape = model.input_shape
     if isinstance(input_shape, list):
         input_shape = input_shape[0]
@@ -59,6 +56,9 @@ def _model_input_size(model: tf.keras.Model) -> tuple[int, int]:
 
 @lru_cache(maxsize=1)
 def load_bundle() -> ModelBundle:
+    from tensorflow.keras.applications.efficientnet import preprocess_input
+    from tensorflow.keras.models import load_model
+
     model_path = _resolve_path("PLANT_MODEL_PATH", DEFAULT_MODEL_PATH)
     class_names_path = _resolve_path("PLANT_CLASS_NAMES_PATH", DEFAULT_CLASS_NAMES_PATH)
 
@@ -134,7 +134,9 @@ def _heatmap_rgb(mask: np.ndarray) -> np.ndarray:
     return np.stack([red, green, blue], axis=-1).astype("uint8")
 
 
-def _saliency_images(model: tf.keras.Model, batch: np.ndarray, class_index: int, image: Image.Image) -> dict[str, str]:
+def _saliency_images(model: Any, batch: np.ndarray, class_index: int, image: Image.Image) -> dict[str, str]:
+    import tensorflow as tf
+
     image_tensor = tf.convert_to_tensor(batch)
 
     with tf.GradientTape() as tape:

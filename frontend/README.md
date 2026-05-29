@@ -10,7 +10,7 @@ npm install
 npm run dev
 ```
 
-The frontend calls this API URL by default:
+In local development on port `3000`, the frontend calls this API URL by default:
 
 ```text
 http://127.0.0.1:8000
@@ -23,3 +23,4 @@ $env:NEXT_PUBLIC_API_URL="http://127.0.0.1:8000"
 npm run dev
 ```
 
+For deployment, leave `NEXT_PUBLIC_API_URL` empty. The exported frontend will call `/api/*` on the same public domain.
