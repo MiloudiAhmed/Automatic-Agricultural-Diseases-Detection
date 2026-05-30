@@ -14,7 +14,7 @@ FROM python:3.13-slim AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=1
-ENV PORT=8000
+ENV PORT=7860
 
 WORKDIR /app
 
@@ -31,6 +31,6 @@ COPY models/class_names.txt models/class_names.txt
 COPY models/efficientnet_model.h5 models/efficientnet_model.h5
 COPY --from=frontend-builder /app/frontend/out frontend/out
 
-EXPOSE 8000
+EXPOSE 7860
 
-CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-7860}"]

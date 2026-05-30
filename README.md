@@ -1,3 +1,10 @@
+---
+title: Plant Disease AI
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Automatic Agricultural Diseases Detection
 
 An academic Machine Learning and Deep Learning project for automatic plant leaf disease detection.  
@@ -211,7 +218,7 @@ The frontend is built with **Next.js** and provides:
 
 ## Web Deployment
 
-The project is now deployable as one web service:
+The project is deployable as one web service:
 
 - Next.js is exported as static files with `output: "export"`.
 - FastAPI serves the exported frontend from `frontend/out`.
@@ -225,6 +232,32 @@ Deployment files:
 - `render.yaml`
 
 Important: `models/efficientnet_model.h5` must be pushed with the repository for cloud deployment. The file is about 49 MB, below GitHub's 100 MiB single-file limit.
+
+### Free Deploy on Hugging Face Spaces
+
+Hugging Face Spaces offers free CPU Basic hardware for public Spaces. This project uses the Docker SDK and listens on port `7860`, which is the default Docker Space port.
+
+1. Create a free Hugging Face account.
+2. Click **New Space**.
+3. Choose:
+   - **SDK**: Docker
+   - **Visibility**: Public
+   - **Hardware**: CPU Basic
+4. Clone the new Space repo locally or add it as a second Git remote.
+5. Push this project to the Space repo.
+
+Example with a second remote:
+
+```powershell
+git remote add hf https://huggingface.co/spaces/YOUR_USERNAME/plant-disease-ai
+git push hf main
+```
+
+Your public app URL will look like:
+
+```text
+https://huggingface.co/spaces/YOUR_USERNAME/plant-disease-ai
+```
 
 ### Deploy on Render
 
